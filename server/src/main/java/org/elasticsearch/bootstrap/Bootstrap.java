@@ -67,16 +67,20 @@ final class Bootstrap {
 
     private static volatile Bootstrap INSTANCE;
     private volatile Node node;
+    // 同步器
     private final CountDownLatch keepAliveLatch = new CountDownLatch(1);
     private final Thread keepAliveThread;
     private final Spawner spawner = new Spawner();
 
-    /** creates a new instance */
+    /**
+     * creates a new instance
+     */
     Bootstrap() {
         keepAliveThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
+                    // 阻塞等待
                     keepAliveLatch.await();
                 } catch (InterruptedException e) {
                     // bail out
@@ -85,6 +89,8 @@ final class Bootstrap {
         }, "elasticsearch[keepAlive/" + Version.CURRENT + "]");
         keepAliveThread.setDaemon(false);
         // keep this thread alive (non daemon thread) until we shutdown
+        // 增加关闭勾子
+        // JVM关闭时执行勾子
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -93,7 +99,9 @@ final class Bootstrap {
         });
     }
 
-    /** initialize native resources */
+    /**
+     * initialize native resources
+     */
     public static void initializeNatives(Path tmpFile, boolean mlockAll, boolean systemCallFilter, boolean ctrlHandler) {
         final Logger logger = LogManager.getLogger(Bootstrap.class);
 
@@ -110,9 +118,9 @@ final class Bootstrap {
         // mlockall if requested
         if (mlockAll) {
             if (Constants.WINDOWS) {
-               Natives.tryVirtualLock();
+                Natives.tryVirtualLock();
             } else {
-               Natives.tryMlockall();
+                Natives.tryMlockall();
             }
         }
 
@@ -153,7 +161,9 @@ final class Bootstrap {
     static void initializeProbes() {
         // Force probes to be loaded
         ProcessProbe.getInstance();
+        // OS信息
         OsProbe.getInstance();
+        // JVM信息
         JvmInfo.jvmInfo();
     }
 
@@ -161,18 +171,20 @@ final class Bootstrap {
         Settings settings = environment.settings();
 
         try {
+            // 为每个插件生成本地控制器
             spawner.spawnNativeControllers(environment);
         } catch (IOException e) {
             throw new BootstrapException(e);
         }
 
         initializeNatives(
-                environment.tmpFile(),
-                BootstrapSettings.MEMORY_LOCK_SETTING.get(settings),
-                BootstrapSettings.SYSTEM_CALL_FILTER_SETTING.get(settings),
-                BootstrapSettings.CTRLHANDLER_SETTING.get(settings));
+            environment.tmpFile(),
+            BootstrapSettings.MEMORY_LOCK_SETTING.get(settings),
+            BootstrapSettings.SYSTEM_CALL_FILTER_SETTING.get(settings),
+            BootstrapSettings.CTRLHANDLER_SETTING.get(settings));
 
         // initialize probes before the security manager is installed
+        // 初始化探针
         initializeProbes();
 
         if (addShutdownHook) {
@@ -190,6 +202,7 @@ final class Bootstrap {
             });
         }
 
+        // Jar包检查
         try {
             // look for jar hell
             final Logger logger = LogManager.getLogger(JarHell.class);
@@ -199,15 +212,18 @@ final class Bootstrap {
         }
 
         // Log ifconfig output before SecurityManager is installed
+        // 打印一些日志
         IfConfig.logIfNecessary();
 
         // install SM after natives, shutdown hooks, etc.
         try {
+            // 设置安全策略
             Security.configure(environment, BootstrapSettings.SECURITY_FILTER_BAD_DEFAULTS_SETTING.get(settings));
         } catch (IOException | NoSuchAlgorithmException e) {
             throw new BootstrapException(e);
         }
 
+        // 创建Node实例
         node = new Node(environment) {
             @Override
             protected void validateNodeBeforeAcceptingRequests(
@@ -242,10 +258,10 @@ final class Bootstrap {
     }
 
     private static Environment createEnvironment(
-            final Path pidFile,
-            final SecureSettings secureSettings,
-            final Settings initialSettings,
-            final Path configPath) {
+        final Path pidFile,
+        final SecureSettings secureSettings,
+        final Settings initialSettings,
+        final Path configPath) {
         Settings.Builder builder = Settings.builder();
         if (pidFile != null) {
             builder.put(Environment.PIDFILE_SETTING.getKey(), pidFile);
@@ -255,8 +271,8 @@ final class Bootstrap {
             builder.setSecureSettings(secureSettings);
         }
         return InternalSettingsPreparer.prepareEnvironment(builder.build(), Collections.emptyMap(), configPath,
-                // HOSTNAME is set by elasticsearch-env and elasticsearch-env.bat so it is always available
-                () -> System.getenv("HOSTNAME"));
+            // HOSTNAME is set by elasticsearch-env and elasticsearch-env.bat so it is always available
+            () -> System.getenv("HOSTNAME"));
     }
 
     private void start() throws NodeValidationException {
@@ -276,25 +292,30 @@ final class Bootstrap {
      * This method is invoked by {@link Elasticsearch#main(String[])} to startup elasticsearch.
      */
     static void init(
-            final boolean foreground,
-            final Path pidFile,
-            final boolean quiet,
-            final Environment initialEnv) throws BootstrapException, NodeValidationException, UserException {
+        final boolean foreground,
+        final Path pidFile,
+        final boolean quiet,
+        final Environment initialEnv) throws BootstrapException, NodeValidationException, UserException {
         // force the class initializer for BootstrapInfo to run before
         // the security manager is installed
         BootstrapInfo.init();
-
+        // 创建boostrap实例
         INSTANCE = new Bootstrap();
 
+        // 安全配置
         final SecureSettings keystore = loadSecureSettings(initialEnv);
+        // 创建Envionment实例
         final Environment environment = createEnvironment(pidFile, keystore, initialEnv.settings(), initialEnv.configFile());
 
+        // 日志配置
+        // 节点名字
         LogConfigurator.setNodeName(Node.NODE_NAME_SETTING.get(environment.settings()));
         try {
             LogConfigurator.configure(environment);
         } catch (IOException e) {
             throw new BootstrapException(e);
         }
+        // pid文件
         if (environment.pidFile() != null) {
             try {
                 PidFile.create(environment.pidFile(), true);
@@ -315,6 +336,7 @@ final class Bootstrap {
             }
 
             // fail if somebody replaced the lucene jars
+            // 检查lucene版本
             checkLucene();
 
             // install the default uncaught exception handler; must be done before security is

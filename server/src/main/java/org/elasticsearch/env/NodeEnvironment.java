@@ -90,13 +90,15 @@ import static java.util.Collections.unmodifiableSet;
 /**
  * A component that holds all data paths for a single node.
  */
-public final class NodeEnvironment  implements Closeable {
+public final class NodeEnvironment implements Closeable {
     public static class NodePath {
         /* ${data.paths}/nodes/{node.id} */
         public final Path path;
         /* ${data.paths}/nodes/{node.id}/indices */
         public final Path indicesPath;
-        /** Cached FileStore from path */
+        /**
+         * Cached FileStore from path
+         */
         public final FileStore fileStore;
 
         public final int majorDeviceNumber;
@@ -138,12 +140,12 @@ public final class NodeEnvironment  implements Closeable {
         @Override
         public String toString() {
             return "NodePath{" +
-                    "path=" + path +
-                    ", indicesPath=" + indicesPath +
-                    ", fileStore=" + fileStore +
-                    ", majorDeviceNumber=" + majorDeviceNumber +
-                    ", minorDeviceNumber=" + minorDeviceNumber +
-                    '}';
+                "path=" + path +
+                ", indicesPath=" + indicesPath +
+                ", fileStore=" + fileStore +
+                ", majorDeviceNumber=" + majorDeviceNumber +
+                ", minorDeviceNumber=" + minorDeviceNumber +
+                '}';
         }
 
     }
@@ -191,6 +193,7 @@ public final class NodeEnvironment  implements Closeable {
 
         /**
          * Tries to acquire a node lock for a node id, throws {@code IOException} if it is unable to acquire it
+         *
          * @param pathFunction function to check node path before attempt of acquiring a node lock
          */
         public NodeLock(final int nodeId, final Logger logger,
@@ -242,6 +245,7 @@ public final class NodeEnvironment  implements Closeable {
 
     /**
      * Setup the environment.
+     *
      * @param settings settings from elasticsearch.yml
      */
     public NodeEnvironment(Settings settings, Environment environment) throws IOException {
@@ -259,6 +263,7 @@ public final class NodeEnvironment  implements Closeable {
         try {
             sharedDataPath = environment.sharedDataFile();
             IOException lastException = null;
+            // 一个机子上能运行的节点最大数量
             int maxLocalStorageNodes = MAX_LOCAL_STORAGE_NODES_SETTING.get(settings);
 
             final AtomicReference<IOException> onCreateDirectoriesException = new AtomicReference<>();
@@ -305,7 +310,10 @@ public final class NodeEnvironment  implements Closeable {
                 logger.debug("using node location [{}], local_lock_id [{}]", nodePaths, nodeLockId);
             }
 
+
+            // 打印节点信息
             maybeLogPathDetails();
+            // 打印Heap信息
             maybeLogHeapDetails();
 
             applySegmentInfosTrace(settings);
@@ -426,7 +434,7 @@ public final class NodeEnvironment  implements Closeable {
 
     private static String toString(Collection<String> items) {
         StringBuilder b = new StringBuilder();
-        for(String item : items) {
+        for (String item : items) {
             if (b.length() > 0) {
                 b.append(", ");
             }
@@ -470,7 +478,7 @@ public final class NodeEnvironment  implements Closeable {
                     locks[i] = dirs[i].obtainLock(IndexWriter.WRITE_LOCK_NAME);
                 } catch (IOException ex) {
                     throw new LockObtainFailedException("unable to acquire " +
-                                    IndexWriter.WRITE_LOCK_NAME + " for " + p, ex);
+                        IndexWriter.WRITE_LOCK_NAME + " for " + p, ex);
                 }
             }
         } finally {
@@ -487,7 +495,7 @@ public final class NodeEnvironment  implements Closeable {
      * allow the folder to be deleted
      *
      * @param lock the shards lock
-     * @throws IOException if an IOException occurs
+     * @throws IOException            if an IOException occurs
      * @throws ElasticsearchException if the write.lock is not acquirable
      */
     public void deleteShardDirectoryUnderLock(ShardLock lock, IndexSettings indexSettings) throws IOException {
@@ -548,13 +556,13 @@ public final class NodeEnvironment  implements Closeable {
      * shards locks were successfully acquired. If any of the indexes shard directories can't be locked
      * non of the shards will be deleted
      *
-     * @param index the index to delete
+     * @param index         the index to delete
      * @param lockTimeoutMS how long to wait for acquiring the indices shard locks
      * @param indexSettings settings for the index being deleted
      * @throws IOException if any of the shards data directories can't be locked or deleted
      */
     public void deleteIndexDirectorySafe(Index index, long lockTimeoutMS, IndexSettings indexSettings)
-            throws IOException, ShardLockObtainFailedException {
+        throws IOException, ShardLockObtainFailedException {
         final List<ShardLock> locks = lockAllForIndex(index, indexSettings, "deleting index directory", lockTimeoutMS);
         try {
             deleteIndexDirectoryUnderLock(index, indexSettings);
@@ -567,7 +575,7 @@ public final class NodeEnvironment  implements Closeable {
      * Deletes an indexes data directory recursively.
      * Note: this method assumes that the shard lock is acquired
      *
-     * @param index the index to delete
+     * @param index         the index to delete
      * @param indexSettings settings for the index being deleted
      */
     public void deleteIndexDirectoryUnderLock(Index index, IndexSettings indexSettings) throws IOException {
@@ -586,7 +594,7 @@ public final class NodeEnvironment  implements Closeable {
      * Tries to lock all local shards for the given index. If any of the shard locks can't be acquired
      * a {@link ShardLockObtainFailedException} is thrown and all previously acquired locks are released.
      *
-     * @param index the index to lock shards for
+     * @param index         the index to lock shards for
      * @param lockTimeoutMS how long to wait for acquiring the indices shard locks
      * @return the {@link ShardLock} instances for this index.
      */
@@ -620,10 +628,10 @@ public final class NodeEnvironment  implements Closeable {
      * write operation on a shards data directory like deleting files, creating a new index writer
      * or recover from a different shard instance into it. If the shard lock can not be acquired
      * a {@link ShardLockObtainFailedException} is thrown.
-     *
+     * <p>
      * Note: this method will return immediately if the lock can't be acquired.
      *
-     * @param id the shard ID to lock
+     * @param id      the shard ID to lock
      * @param details information about why the shard is being locked
      * @return the shard lock. Call {@link ShardLock#close()} to release the lock
      */
@@ -636,8 +644,9 @@ public final class NodeEnvironment  implements Closeable {
      * write operation on a shards data directory like deleting files, creating a new index writer
      * or recover from a different shard instance into it. If the shard lock can not be acquired
      * a {@link ShardLockObtainFailedException} is thrown
-     * @param shardId the shard ID to lock
-     * @param details information about why the shard is being locked
+     *
+     * @param shardId       the shard ID to lock
+     * @param details       information about why the shard is being locked
      * @param lockTimeoutMS the lock timeout in milliseconds
      * @return the shard lock. Call {@link ShardLock#close()} to release the lock
      */
@@ -688,7 +697,7 @@ public final class NodeEnvironment  implements Closeable {
 
     /**
      * Returns all currently lock shards.
-     *
+     * <p>
      * Note: the shard ids return do not contain a valid Index UUID
      */
     public Set<ShardId> lockedShards() {
@@ -762,12 +771,13 @@ public final class NodeEnvironment  implements Closeable {
 
     /**
      * Returns an array of all of the nodes data locations.
+     *
      * @throws IllegalStateException if the node is not configured to store local locations
      */
     public Path[] nodeDataPaths() {
         assertEnvIsLocked();
         Path[] paths = new Path[nodePaths.length];
-        for(int i=0;i<paths.length;i++) {
+        for (int i = 0; i < paths.length; i++) {
             paths[i] = nodePaths[i].path;
         }
         return paths;
@@ -823,14 +833,12 @@ public final class NodeEnvironment  implements Closeable {
     }
 
 
-
     /**
      * Returns all shard paths excluding custom shard path. Note: Shards are only allocated on one of the
      * returned paths. The returned array may contain paths to non-existing directories.
      *
      * @see IndexSettings#hasCustomDataPath()
      * @see #resolveCustomLocation(IndexSettings, ShardId)
-     *
      */
     public Path[] availableShardPaths(ShardId shardId) {
         assertEnvIsLocked();
@@ -851,6 +859,7 @@ public final class NodeEnvironment  implements Closeable {
 
     /**
      * Returns folder names in ${data.paths}/nodes/{node.id}/indices folder that don't match the given predicate.
+     *
      * @param excludeIndexPathIdsPredicate folder names to exclude
      */
     public Set<String> availableIndexFolders(Predicate<String> excludeIndexPathIdsPredicate) throws IOException {
@@ -880,7 +889,7 @@ public final class NodeEnvironment  implements Closeable {
     /**
      * Return directory names in the nodes/{node.id}/indices directory for the given node path that don't match the given predicate.
      *
-     * @param nodePath the path
+     * @param nodePath                     the path
      * @param excludeIndexPathIdsPredicate folder names to exclude
      * @return all directories that could be indices for the given node path.
      * @throws IOException if an I/O exception occurs traversing the filesystem
@@ -928,6 +937,7 @@ public final class NodeEnvironment  implements Closeable {
      * Tries to find all allocated shards for the given index
      * on the current node. NOTE: This methods is prone to race-conditions on the filesystem layer since it might not
      * see directories created concurrently or while it's traversing.
+     *
      * @param index the index to filter shards
      * @return a set of shard IDs
      * @throws IOException if an IOException occurs
@@ -957,6 +967,7 @@ public final class NodeEnvironment  implements Closeable {
 
     /**
      * Find all the shards for this index, returning a map of the {@code NodePath} to the number of shards on that path
+     *
      * @param index the index by which to filter shards
      * @return a map of NodePath to count of the shards for the index on that path
      * @throws IOException if an IOException occurs
@@ -1041,8 +1052,8 @@ public final class NodeEnvironment  implements Closeable {
                 Files.move(src, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
             } catch (AtomicMoveNotSupportedException ex) {
                 throw new IllegalStateException("atomic_move is not supported by the filesystem on path ["
-                        + nodePath.path
-                        + "] atomic_move is required for elasticsearch to work correctly.", ex);
+                    + nodePath.path
+                    + "] atomic_move is required for elasticsearch to work correctly.", ex);
             } finally {
                 try {
                     Files.deleteIfExists(src);
@@ -1166,7 +1177,7 @@ public final class NodeEnvironment  implements Closeable {
      * the root path for the index.
      *
      * @param indexSettings settings for the index
-     * @param shardId shard to resolve the path to
+     * @param shardId       shard to resolve the path to
      */
     public Path resolveCustomLocation(IndexSettings indexSettings, final ShardId shardId) {
         return resolveCustomLocation(indexSettings, shardId, sharedDataPath, nodeLockId);
@@ -1183,8 +1194,8 @@ public final class NodeEnvironment  implements Closeable {
         int count = shardPath.getNameCount();
 
         // Sanity check:
-        assert Integer.parseInt(shardPath.getName(count-1).toString()) >= 0;
-        assert "indices".equals(shardPath.getName(count-3).toString());
+        assert Integer.parseInt(shardPath.getName(count - 1).toString()) >= 0;
+        assert "indices".equals(shardPath.getName(count - 3).toString());
 
         return shardPath.getParent().getParent().getParent();
     }

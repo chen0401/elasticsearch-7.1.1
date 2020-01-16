@@ -69,8 +69,10 @@ final class Spawner implements Closeable {
          * For each module, attempt to spawn the controller daemon. Silently ignore any module that doesn't include a controller for the
          * correct platform.
          */
+        // 从modules目录下读取了所有插件的path
         List<Path> paths = PluginsService.findPluginDirs(environment.modulesFile());
         for (final Path modules : paths) {
+            // 插件信息
             final PluginInfo info = PluginInfo.readFromProperties(modules);
             final Path spawnPath = Platforms.nativeControllerPath(modules);
             if (!Files.isRegularFile(spawnPath)) {

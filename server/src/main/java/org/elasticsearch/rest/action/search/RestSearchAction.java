@@ -73,6 +73,7 @@ public class RestSearchAction extends BaseRestHandler {
     public static final String TYPES_DEPRECATION_MESSAGE = "[types removal]" +
         " Specifying types in search requests is deprecated.";
 
+    // 向控制器中注册接口路径
     public RestSearchAction(Settings settings, RestController controller) {
         super(settings);
         controller.registerHandler(GET, "/_search", this);
@@ -116,8 +117,8 @@ public class RestSearchAction extends BaseRestHandler {
      * Parses the rest request on top of the SearchRequest, preserving values that are not overridden by the rest request.
      *
      * @param requestContentParser body of the request to read. This method does not attempt to read the body from the {@code request}
-     *        parameter
-     * @param setSize how the size url parameter is handled. {@code udpate_by_query} and regular search differ here.
+     *                             parameter
+     * @param setSize              how the size url parameter is handled. {@code udpate_by_query} and regular search differ here.
      */
     public static void parseSearchRequest(SearchRequest searchRequest, RestRequest request,
                                           XContentParser requestContentParser,
@@ -153,7 +154,7 @@ public class RestSearchAction extends BaseRestHandler {
         // not be specified explicitly by the user.
         String searchType = request.param("search_type");
         if ("query_and_fetch".equals(searchType) ||
-                "dfs_query_and_fetch".equals(searchType)) {
+            "dfs_query_and_fetch".equals(searchType)) {
             throw new IllegalArgumentException("Unsupported search type [" + searchType + "]");
         } else {
             searchRequest.searchType(searchType);
@@ -211,7 +212,7 @@ public class RestSearchAction extends BaseRestHandler {
         }
         if (request.hasParam("terminate_after")) {
             int terminateAfter = request.paramAsInt("terminate_after",
-                    SearchContext.DEFAULT_TERMINATE_AFTER);
+                SearchContext.DEFAULT_TERMINATE_AFTER);
             if (terminateAfter < 0) {
                 throw new IllegalArgumentException("terminateAfter must be > 0");
             } else if (terminateAfter > 0) {
@@ -285,9 +286,9 @@ public class RestSearchAction extends BaseRestHandler {
             int suggestSize = request.paramAsInt("suggest_size", 5);
             String suggestMode = request.param("suggest_mode");
             searchSourceBuilder.suggest(new SuggestBuilder().addSuggestion(suggestField,
-                    termSuggestion(suggestField)
-                        .text(suggestText).size(suggestSize)
-                        .suggestMode(SuggestMode.resolve(suggestMode))));
+                termSuggestion(suggestField)
+                    .text(suggestText).size(suggestSize)
+                    .suggestMode(SuggestMode.resolve(suggestMode))));
         }
     }
 
@@ -296,8 +297,8 @@ public class RestSearchAction extends BaseRestHandler {
      * if {@link #TOTAL_HITS_AS_INT_PARAM} is set.
      *
      * @throws IllegalArgumentException if {@link #TOTAL_HITS_AS_INT_PARAM}
-     * is used in conjunction with a lower bound value (other than {@link SearchContext#DEFAULT_TRACK_TOTAL_HITS_UP_TO})
-     * for the track_total_hits option.
+     *                                  is used in conjunction with a lower bound value (other than {@link SearchContext#DEFAULT_TRACK_TOTAL_HITS_UP_TO})
+     *                                  for the track_total_hits option.
      */
     public static void checkRestTotalHits(RestRequest restRequest, SearchRequest searchRequest) {
         boolean totalHitsAsInt = restRequest.paramAsBoolean(TOTAL_HITS_AS_INT_PARAM, false);
@@ -311,7 +312,7 @@ public class RestSearchAction extends BaseRestHandler {
         if (trackTotalHitsUpTo == null) {
             searchRequest.source().trackTotalHits(true);
         } else if (trackTotalHitsUpTo != SearchContext.TRACK_TOTAL_HITS_ACCURATE
-                && trackTotalHitsUpTo != SearchContext.TRACK_TOTAL_HITS_DISABLED) {
+            && trackTotalHitsUpTo != SearchContext.TRACK_TOTAL_HITS_DISABLED) {
             throw new IllegalArgumentException("[" + TOTAL_HITS_AS_INT_PARAM + "] cannot be used " +
                 "if the tracking of total hits is not accurate, got " + trackTotalHitsUpTo);
         }

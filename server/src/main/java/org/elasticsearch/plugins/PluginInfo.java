@@ -61,14 +61,14 @@ public class PluginInfo implements Writeable, ToXContentObject {
     /**
      * Construct plugin info.
      *
-     * @param name                  the name of the plugin
-     * @param description           a description of the plugin
-     * @param version               an opaque version identifier for the plugin
-     * @param elasticsearchVersion  the version of Elasticsearch the plugin was built for
-     * @param javaVersion           the version of Java the plugin was built with
-     * @param classname             the entry point to the plugin
-     * @param extendedPlugins       other plugins this plugin extends through SPI
-     * @param hasNativeController   whether or not the plugin has a native controller
+     * @param name                 the name of the plugin
+     * @param description          a description of the plugin
+     * @param version              an opaque version identifier for the plugin
+     * @param elasticsearchVersion the version of Elasticsearch the plugin was built for
+     * @param javaVersion          the version of Java the plugin was built with
+     * @param classname            the entry point to the plugin
+     * @param extendedPlugins      other plugins this plugin extends through SPI
+     * @param hasNativeController  whether or not the plugin has a native controller
      */
     public PluginInfo(String name, String description, String version, Version elasticsearchVersion, String javaVersion,
                       String classname, List<String> extendedPlugins, boolean hasNativeController) {
@@ -143,13 +143,14 @@ public class PluginInfo implements Writeable, ToXContentObject {
     /**
      * Reads the plugin descriptor file.
      *
-     * @param path           the path to the root directory for the plugin
+     * @param path the path to the root directory for the plugin
      * @return the plugin info
      * @throws IOException if an I/O exception occurred reading the plugin descriptor
      */
     public static PluginInfo readFromProperties(final Path path) throws IOException {
+        // properties文件的path
         final Path descriptor = path.resolve(ES_PLUGIN_PROPERTIES);
-
+        // 读物properties文件中的配置数据
         final Map<String, String> propsMap;
         {
             final Properties props = new Properties();
@@ -162,35 +163,35 @@ public class PluginInfo implements Writeable, ToXContentObject {
         final String name = propsMap.remove("name");
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException(
-                    "property [name] is missing in [" + descriptor + "]");
+                "property [name] is missing in [" + descriptor + "]");
         }
         final String description = propsMap.remove("description");
         if (description == null) {
             throw new IllegalArgumentException(
-                    "property [description] is missing for plugin [" + name + "]");
+                "property [description] is missing for plugin [" + name + "]");
         }
         final String version = propsMap.remove("version");
         if (version == null) {
             throw new IllegalArgumentException(
-                    "property [version] is missing for plugin [" + name + "]");
+                "property [version] is missing for plugin [" + name + "]");
         }
 
         final String esVersionString = propsMap.remove("elasticsearch.version");
         if (esVersionString == null) {
             throw new IllegalArgumentException(
-                    "property [elasticsearch.version] is missing for plugin [" + name + "]");
+                "property [elasticsearch.version] is missing for plugin [" + name + "]");
         }
         final Version esVersion = Version.fromString(esVersionString);
         final String javaVersionString = propsMap.remove("java.version");
         if (javaVersionString == null) {
             throw new IllegalArgumentException(
-                    "property [java.version] is missing for plugin [" + name + "]");
+                "property [java.version] is missing for plugin [" + name + "]");
         }
         JarHell.checkVersionFormat(javaVersionString);
         final String classname = propsMap.remove("classname");
         if (classname == null) {
             throw new IllegalArgumentException(
-                    "property [classname] is missing for plugin [" + name + "]");
+                "property [classname] is missing for plugin [" + name + "]");
         }
 
         final String extendedString = propsMap.remove("extended.plugins");
@@ -215,12 +216,12 @@ public class PluginInfo implements Writeable, ToXContentObject {
                     break;
                 default:
                     final String message = String.format(
-                            Locale.ROOT,
-                            "property [%s] must be [%s], [%s], or unspecified but was [%s]",
-                            "has_native_controller",
-                            "true",
-                            "false",
-                            hasNativeControllerValue);
+                        Locale.ROOT,
+                        "property [%s] must be [%s], [%s], or unspecified but was [%s]",
+                        "has_native_controller",
+                        "true",
+                        "false",
+                        hasNativeControllerValue);
                     throw new IllegalArgumentException(message);
             }
         }
@@ -234,7 +235,7 @@ public class PluginInfo implements Writeable, ToXContentObject {
         }
 
         return new PluginInfo(name, description, version, esVersion, javaVersionString,
-                              classname, extendedPlugins, hasNativeController);
+            classname, extendedPlugins, hasNativeController);
     }
 
     /**

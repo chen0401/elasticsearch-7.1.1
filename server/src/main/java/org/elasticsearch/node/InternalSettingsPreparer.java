@@ -55,17 +55,20 @@ public class InternalSettingsPreparer {
     /**
      * Prepares the settings by gathering all elasticsearch system properties, optionally loading the configuration settings.
      *
-     * @param input      the custom settings to use; these are not overwritten by settings in the configuration file
-     * @param properties map of properties key/value pairs (usually from the command-line)
-     * @param configPath path to config directory; (use null to indicate the default)
+     * @param input           the custom settings to use; these are not overwritten by settings in the configuration file
+     * @param properties      map of properties key/value pairs (usually from the command-line)   一般为命令行参数
+     * @param configPath      path to config directory; (use null to indicate the default)
      * @param defaultNodeName supplier for the default node.name if the setting isn't defined
      * @return the {@link Environment}
      */
     public static Environment prepareEnvironment(Settings input, Map<String, String> properties,
-            Path configPath, Supplier<String> defaultNodeName) {
+                                                 Path configPath, Supplier<String> defaultNodeName) {
         // just create enough settings to build the environment, to get the config dir
+        // Seetings.Builder是一个静态内部类
         Settings.Builder output = Settings.builder();
+        // 初始化Builder 将input和properties中参数put到output中的map
         initializeSettings(output, input, properties);
+        // 创建Enviroment实例
         Environment environment = new Environment(output.build(), configPath);
 
         if (Files.exists(environment.configFile().resolve("elasticsearch.yaml"))) {
@@ -75,7 +78,7 @@ public class InternalSettingsPreparer {
         if (Files.exists(environment.configFile().resolve("elasticsearch.json"))) {
             throw new SettingsException("elasticsearch.json was deprecated in 5.5.0 and must be converted to elasticsearch.yml");
         }
-
+        // 在config目录下读取elasticsearch.yml文件
         output = Settings.builder(); // start with a fresh output
         Path path = environment.configFile().resolve("elasticsearch.yml");
         if (Files.exists(path)) {
@@ -95,6 +98,7 @@ public class InternalSettingsPreparer {
 
         // we put back the path.logs so we can use it in the logging configuration file
         output.put(Environment.PATH_LOGS_SETTING.getKey(), environment.logsFile().toAbsolutePath().normalize().toString());
+        // 创建最终的Environment实例并返回
         return new Environment(output.build(), configPath);
     }
 
@@ -102,8 +106,8 @@ public class InternalSettingsPreparer {
      * Initializes the builder with the given input settings, and applies settings from the specified map (these settings typically come
      * from the command line).
      *
-     * @param output the settings builder to apply the input and default settings to
-     * @param input the input settings
+     * @param output     the settings builder to apply the input and default settings to
+     * @param input      the input settings
      * @param esSettings a map from which to apply settings
      */
     static void initializeSettings(final Settings.Builder output, final Settings input, final Map<String, String> esSettings) {
@@ -118,7 +122,7 @@ public class InternalSettingsPreparer {
      */
     private static void checkSettingsForTerminalDeprecation(final Settings.Builder output) throws SettingsException {
         // This method to be removed in 8.0.0, as it was deprecated in 6.0 and removed in 7.0
-        assert Version.CURRENT.major != 8: "Logic pertaining to config driven prompting should be removed";
+        assert Version.CURRENT.major != 8 : "Logic pertaining to config driven prompting should be removed";
         for (String setting : output.keys()) {
             switch (output.get(setting)) {
                 case SECRET_PROMPT_VALUE:

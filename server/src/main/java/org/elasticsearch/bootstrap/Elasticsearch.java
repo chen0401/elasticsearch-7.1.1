@@ -52,7 +52,8 @@ class Elasticsearch extends EnvironmentAwareCommand {
 
     // visible for testing
     Elasticsearch() {
-        super("starts elasticsearch", () -> {}); // we configure logging later so we override the base class from configuring logging
+        super("starts elasticsearch", () -> {
+        }); // we configure logging later so we override the base class from configuring logging
         versionOption = parser.acceptsAll(Arrays.asList("V", "version"),
             "Prints elasticsearch version information and exits");
         daemonizeOption = parser.acceptsAll(Arrays.asList("d", "daemonize"),
@@ -95,8 +96,11 @@ class Elasticsearch extends EnvironmentAwareCommand {
         }
     }
 
+    /**
+     * DAS 缓存设置
+     */
     private static void overrideDnsCachePolicyProperties() {
-        for (final String property : new String[] {"networkaddress.cache.ttl", "networkaddress.cache.negative.ttl" }) {
+        for (final String property : new String[]{"networkaddress.cache.ttl", "networkaddress.cache.negative.ttl"}) {
             final String overrideProperty = "es." + property;
             final String overrideValue = System.getProperty(overrideProperty);
             if (overrideValue != null) {
@@ -105,7 +109,7 @@ class Elasticsearch extends EnvironmentAwareCommand {
                     Security.setProperty(property, Integer.toString(Integer.valueOf(overrideValue)));
                 } catch (final NumberFormatException e) {
                     throw new IllegalArgumentException(
-                            "failed to parse [" + overrideProperty + "] with value [" + overrideValue + "]", e);
+                        "failed to parse [" + overrideProperty + "] with value [" + overrideValue + "]", e);
                 }
             }
         }
@@ -147,6 +151,7 @@ class Elasticsearch extends EnvironmentAwareCommand {
         }
 
         try {
+            // 执行初始化
             init(daemonize, pidFile, quiet, env);
         } catch (NodeValidationException e) {
             throw new UserException(ExitCodes.CONFIG, e.getMessage());
@@ -167,9 +172,9 @@ class Elasticsearch extends EnvironmentAwareCommand {
     /**
      * Required method that's called by Apache Commons procrun when
      * running as a service on Windows, when the service is stopped.
-     *
+     * <p>
      * http://commons.apache.org/proper/commons-daemon/procrun.html
-     *
+     * <p>
      * NOTE: If this method is renamed and/or moved, make sure to
      * update elasticsearch-service.bat!
      */

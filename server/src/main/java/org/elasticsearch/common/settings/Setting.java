@@ -407,6 +407,7 @@ public class Setting<T> implements ToXContentObject {
     }
 
     private T get(Settings settings, boolean validate) {
+        // 从settings中获取对应的配置
         String value = getRaw(settings);
         try {
             T parsed = parser.apply(value);

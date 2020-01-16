@@ -52,9 +52,9 @@ public class Environment {
 
     public static final Setting<String> PATH_HOME_SETTING = Setting.simpleString("path.home", Property.NodeScope);
     public static final Setting<List<String>> PATH_DATA_SETTING =
-            Setting.listSetting("path.data", Collections.emptyList(), Function.identity(), Property.NodeScope);
+        Setting.listSetting("path.data", Collections.emptyList(), Function.identity(), Property.NodeScope);
     public static final Setting<String> PATH_LOGS_SETTING =
-            new Setting<>("path.logs", "", Function.identity(), Property.NodeScope);
+        new Setting<>("path.logs", "", Function.identity(), Property.NodeScope);
     public static final Setting<List<String>> PATH_REPO_SETTING =
         Setting.listSetting("path.repo", Collections.emptyList(), Function.identity(), Property.NodeScope);
     public static final Setting<String> PATH_SHARED_DATA_SETTING = Setting.simpleString("path.shared_data", Property.NodeScope);
@@ -74,33 +74,48 @@ public class Environment {
 
     private final Path sharedDataFile;
 
-    /** location of bin/, used by plugin manager */
+    /**
+     * location of bin/, used by plugin manager
+     */
     private final Path binFile;
 
-    /** location of lib/, */
+    /**
+     * location of lib/,
+     */
     private final Path libFile;
 
     private final Path logsFile;
 
-    /** Path to the PID file (can be null if no PID file is configured) **/
+    /**
+     * Path to the PID file (can be null if no PID file is configured)
+     **/
     private final Path pidFile;
 
-    /** Path to the temporary file directory used by the JDK */
+    /**
+     * Path to the temporary file directory used by the JDK
+     */
     private final Path tmpFile;
 
+    /**
+     * 构造函数
+     *
+     * @param settings
+     * @param configPath
+     */
     public Environment(final Settings settings, final Path configPath) {
         this(settings, configPath, PathUtils.get(System.getProperty("java.io.tmpdir")));
     }
 
     // Should only be called directly by this class's unit tests
     Environment(final Settings settings, final Path configPath, final Path tmpPath) {
+        // home目录 来自命令行
         final Path homeFile;
         if (PATH_HOME_SETTING.exists(settings)) {
             homeFile = PathUtils.get(PATH_HOME_SETTING.get(settings)).normalize();
         } else {
             throw new IllegalStateException(PATH_HOME_SETTING.getKey() + " is not configured");
         }
-
+        // config目录
         if (configPath != null) {
             configFile = configPath.normalize();
         } else {
@@ -109,8 +124,9 @@ public class Environment {
 
         tmpFile = Objects.requireNonNull(tmpPath);
 
+        // 插件目录
         pluginsFile = homeFile.resolve("plugins");
-
+        // data目录
         List<String> dataPaths = PATH_DATA_SETTING.get(settings);
         final ClusterName clusterName = ClusterName.CLUSTER_NAME_SETTING.get(settings);
         if (DiscoveryNode.nodeRequiresLocalStorage(settings)) {
@@ -145,6 +161,7 @@ public class Environment {
             }
         }
 
+        // logs目录
         // this is trappy, Setting#get(Settings) will get a fallback setting yet return false for Settings#exists(Settings)
         if (PATH_LOGS_SETTING.exists(settings)) {
             logsFile = PathUtils.get(PATH_LOGS_SETTING.get(settings)).normalize();
@@ -158,8 +175,11 @@ public class Environment {
             pidFile = null;
         }
 
+        // bin目录
         binFile = homeFile.resolve("bin");
+        // lib目录
         libFile = homeFile.resolve("lib");
+        // modules目录
         modulesFile = homeFile.resolve("modules");
 
         Settings.Builder finalSettings = Settings.builder().put(settings);
@@ -201,7 +221,7 @@ public class Environment {
 
     /**
      * Resolves the specified location against the list of configured repository roots
-     *
+     * <p>
      * If the specified location doesn't match any of the roots, returns null.
      */
     public Path resolveRepoFile(String location) {
@@ -211,7 +231,7 @@ public class Environment {
     /**
      * Checks if the specified URL is pointing to the local file system and if it does, resolves the specified url
      * against the list of configured repository roots
-     *
+     * <p>
      * If the specified url doesn't match any of the roots, returns null.
      */
     public URL resolveRepoURL(URL url) {
@@ -255,6 +275,7 @@ public class Environment {
     }
 
     // TODO: rename all these "file" methods to "dir"
+
     /**
      * The config directory.
      */
@@ -289,12 +310,16 @@ public class Environment {
         return pidFile;
     }
 
-    /** Path to the default temp directory used by the JDK */
+    /**
+     * Path to the default temp directory used by the JDK
+     */
     public Path tmpFile() {
         return tmpFile;
     }
 
-    /** Ensure the configured temp directory is a valid directory */
+    /**
+     * Ensure the configured temp directory is a valid directory
+     */
     public void validateTmpFile() throws IOException {
         if (Files.exists(tmpFile) == false) {
             throw new FileNotFoundException("Temporary file directory [" + tmpFile + "] does not exist or is not accessible");

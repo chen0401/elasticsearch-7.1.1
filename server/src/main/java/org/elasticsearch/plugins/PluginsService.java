@@ -127,11 +127,13 @@ public class PluginsService {
             pluginsNames.add(pluginInfo.getName());
         }
 
+        // 存储了所有的module和plugin
         Set<Bundle> seenBundles = new LinkedHashSet<>();
         List<PluginInfo> modulesList = new ArrayList<>();
         // load modules
         if (modulesDirectory != null) {
             try {
+                // 读取module列表
                 Set<Bundle> modules = getModuleBundles(modulesDirectory);
                 for (Bundle bundle : modules) {
                     modulesList.add(bundle.plugin);
@@ -148,6 +150,7 @@ public class PluginsService {
                 // TODO: remove this leniency, but tests bogusly rely on it
                 if (isAccessibleDirectory(pluginsDirectory, logger)) {
                     checkForFailedPluginRemovals(pluginsDirectory);
+                    // 读取插件列表
                     Set<Bundle> plugins = getPluginBundles(pluginsDirectory);
                     for (final Bundle bundle : plugins) {
                         pluginsList.add(bundle.plugin);

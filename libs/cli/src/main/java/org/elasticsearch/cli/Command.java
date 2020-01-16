@@ -35,12 +35,16 @@ import java.util.Arrays;
  */
 public abstract class Command implements Closeable {
 
-    /** A description of the command, used in the help output. */
+    /**
+     * A description of the command, used in the help output.
+     */
     protected final String description;
 
     private final Runnable beforeMain;
 
-    /** The option parser for this command. */
+    /**
+     * The option parser for this command.
+     */
     protected final OptionParser parser = new OptionParser();
 
     private final OptionSpec<Void> helpOption = parser.acceptsAll(Arrays.asList("h", "help"), "show help").forHelp();
@@ -52,7 +56,7 @@ public abstract class Command implements Closeable {
      * Construct the command with the specified command description and runnable to execute before main is invoked.
      *
      * @param description the command description
-     * @param beforeMain the before-main runnable
+     * @param beforeMain  the before-main runnable
      */
     public Command(final String description, final Runnable beforeMain) {
         this.description = description;
@@ -61,7 +65,9 @@ public abstract class Command implements Closeable {
 
     private Thread shutdownHookThread;
 
-    /** Parses options for this command from args and executes it. */
+    /**
+     * Parses options for this command from args and executes it.
+     */
     public final int main(String[] args, Terminal terminal) throws Exception {
         if (addShutdownHook()) {
 
@@ -106,6 +112,7 @@ public abstract class Command implements Closeable {
      * Executes the command, but all errors are thrown.
      */
     void mainWithoutErrorHandling(String[] args, Terminal terminal) throws Exception {
+        // 解析命令行参数
         final OptionSet options = parser.parse(args);
 
         if (options.has(helpOption)) {
@@ -124,7 +131,9 @@ public abstract class Command implements Closeable {
         execute(terminal, options);
     }
 
-    /** Prints a help message for the command to the terminal. */
+    /**
+     * Prints a help message for the command to the terminal.
+     */
     private void printHelp(Terminal terminal) throws IOException {
         terminal.println(description);
         terminal.println("");
@@ -132,8 +141,11 @@ public abstract class Command implements Closeable {
         parser.printHelpOn(terminal.getWriter());
     }
 
-    /** Prints additional help information, specific to the command */
-    protected void printAdditionalHelp(Terminal terminal) {}
+    /**
+     * Prints additional help information, specific to the command
+     */
+    protected void printAdditionalHelp(Terminal terminal) {
+    }
 
     @SuppressForbidden(reason = "Allowed to exit explicitly from #main()")
     protected static void exit(int status) {
@@ -142,8 +154,9 @@ public abstract class Command implements Closeable {
 
     /**
      * Executes this command.
-     *
-     * Any runtime user errors (like an input file that does not exist), should throw a {@link UserException}. */
+     * <p>
+     * Any runtime user errors (like an input file that does not exist), should throw a {@link UserException}.
+     */
     protected abstract void execute(Terminal terminal, OptionSet options) throws Exception;
 
     /**
@@ -156,7 +169,9 @@ public abstract class Command implements Closeable {
         return true;
     }
 
-    /** Gets the shutdown hook thread if it exists **/
+    /**
+     * Gets the shutdown hook thread if it exists
+     **/
     Thread getShutdownHookThread() {
         return shutdownHookThread;
     }
